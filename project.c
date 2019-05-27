@@ -4,6 +4,8 @@
 #define MAX 2415
 #define STRING 10
 
+int top=0;
+int stack[MAX*MAX];
 
 int ** createMatrix(int *words[MAX],int **adjacencyMatrix)
 {
@@ -60,7 +62,8 @@ int isOneLetter(char *string1,char *string2)
 	
 }
 
-void checkConnection(char *words[MAX],int**adjacencyMatrix,char string1[STRING],char string2[STRING])
+	void checkConnection(char *words[MAX],int**adjacencyMatrix,char string1[STRING],char string2[STRING]
+					,int *firstIndex,int *secondIndex)
 {
 	int i=0,j=0;
 	
@@ -76,17 +79,177 @@ void checkConnection(char *words[MAX],int**adjacencyMatrix,char string1[STRING],
 	
 	if(adjacencyMatrix[i][j]==1)
 	{
-		printf("There is a connection between these two: %s and %s.", string1, string2);
+		printf("\nThere is a connection between these two: %s and %s\n", string1, string2);
 	}
 	else
 	{
-		printf("There is not a connection between these two: %s and %s.", string1, string2);
+		printf("\nThere is not a connection between these two: %s and %s\n", string1, string2);
+	}
+	
+	*firstIndex=i;
+	*secondIndex=j;
+}
+
+void transition(int *firstIndex,int *secondIndex,int **adjacencyMatrix,int *words[MAX])
+{
+	int path[MAX];
+	int pathIndex=0,connection=0,control;
+	int founded=0;
+	
+	push(*firstIndex);
+	path[pathIndex++]=*firstIndex;
+	while(!isEmpty())
+	{
+		//printf("\ngirdi1");
+
+		while((adjacencyMatrix[*firstIndex][connection] != 1)
+				&& (connection<MAX))
+				{
+					//printf("%d\n", adjacencyMatrix[*firstIndex][connection]);
+	 				connection++;
+				}
+
+		if(connection<MAX && (*secondIndex != connection))
+		{
+			//printf("\ngirdi3");
+
+				if(controlPath(connection,path,pathIndex)==false)
+				{
+					//printf("\ngirdi5");
+				//	printf("check:%d\n", controlPath(connection,path,pathIndex));
+
+						push(connection);
+						//printf("%d\n", peek());
+				}
+				connection++;
+			
+		}
+		else if(connection<MAX && (*secondIndex == connection) )
+		{
+				printf("\n%d",pathIndex);
+				printPath(path,pathIndex,words);
+				founded=1;
+				connection++;
+		}
+		else
+		{
+			//printf("\ngirdi7");
+			control=pop();
+			while(  (controlPath(control,path,pathIndex)==true)
+					&& (isEmpty()!=1))
+					{
+						pathIndex--;
+						control=pop();
+					}
+			if(!isEmpty())
+			{
+				*firstIndex=control;
+				push(*firstIndex);
+				path[pathIndex++]=*firstIndex;
+				connection=0;
+			}
+			
+		}
+	}
+	
+	while(isEmpty() != 1);
+	if(founded==0)
+	{
+		printf("There is no path for these words.b");
+	}
+	
+
+
+}
+
+int controlPath(int connection,int path[MAX],int pathIndex)
+{
+	int i=0;
+ 	while((connection != path[i]) && (i<pathIndex))
+	{
+		i++;
+	}
+	if(i<pathIndex)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 
-void transition()
+void printPath(int path[MAX],int size,int *words[MAX])
 {
-	
+	int i;
+	printf("%d ",size);
+	for(i=0; i<size; i++)
+	{
+		printf("%s-->", words[path[i]]);
+	}
+	printf("%d words changed.", size);
+}
+
+int isEmpty()
+{
+	if(top==0)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool isFull()
+{
+	if(top==MAX)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+int pop()
+{
+	int data;
+	if(!isEmpty())
+	{
+		data=stack[top--];
+ 		//printf("\n[INFO]! This is the pop value: %d\n", data);
+		return data;
+	}
+	else
+	{
+		printf("[ERROR]! Empty stack.\n");
+		return -1;
+	}
+}
+
+void push(int data)
+{
+	if(!isFull())
+	{
+		top++;
+		stack[top]=data;
+	}
+	else
+	{
+		printf("[ERROR]! Stack is full.\n");
+	}
+	//printf("[INFO]! Data pushed succesfully %d.\n", data);
+}
+
+int peek()
+{
+	if(!isEmpty())
+	{
+		return stack[top];
+	}
 }
 
 void main()
@@ -96,6 +259,10 @@ void main()
 	char line[STRING],temp[STRING],string1[STRING],string2[STRING];
 	int i=0,j=0;
 	int **adjacencyMatrix;
+	int *firstIndex,*secondIndex;
+	
+	firstIndex=(int *)malloc(sizeof(int));
+	secondIndex=(int *)malloc(sizeof(int));
 	
 	file=fopen("kelime.txt", "r");
 	if(file==NULL)
@@ -105,7 +272,7 @@ void main()
 	}
 	else
 	{
-		printf("[INFORMATION]! File opened with succes.\n");
+		printf("[INFO]! File opened with succes.\n");
 	}
 
 	while(!feof(file))
@@ -136,6 +303,8 @@ void main()
 		}
 		printf("\n");
 	} */
- 	checkConnection(words,adjacencyMatrix,string1,string2);
+ 	checkConnection(words,adjacencyMatrix,string1,string2,firstIndex,secondIndex);
+ 	
+ 	transition(firstIndex,secondIndex,adjacencyMatrix,words);
 	fclose(file);
 }
